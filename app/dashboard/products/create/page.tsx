@@ -1,0 +1,27 @@
+import Header from '@/components/Header'
+import { Separator } from '@/components/ui/separator'
+import ProductForm from '../_components/ProductForm'
+import { fetchAllCategories } from '@/lib/actions/category.actions'
+import { fetchAllBrands } from '@/lib/actions/brand.actions'
+import { fetchAllUnits } from '@/lib/actions/unit.actions'
+
+
+const page = async () => {
+
+    const categories = await fetchAllCategories() || [];
+    const brands = await fetchAllBrands() || [];
+    const units = await fetchAllUnits() || [];
+
+    return (
+        <>
+            <Header title='Create Product' />
+            <Separator />
+            <div className="py-6">
+                <ProductForm categories={categories} brands={brands} units={units} />
+            </div>
+
+        </>
+    )
+}
+
+export default page
