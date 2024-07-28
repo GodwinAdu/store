@@ -1,9 +1,9 @@
-"use client"
+"use client";
 import { Button } from "@/components/ui/button";
-import { CalendarIcon, Clock, Delete, DollarSignIcon, Edit, HandCoins, Pause, Plus, PlusCircle } from "lucide-react";
+import { CalendarIcon, Edit, Plus, PlusCircle } from "lucide-react";
 import ProductContainer from "./ProductContainer";
 import useCart from "@/lib/hooks/use-cart";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import UnitSelection from "../commons/UnitSelection";
 import DeleteProductCart from "./DeleteProductCart";
 import CancelModal from "./CancelModal";
@@ -14,15 +14,18 @@ import TransactionModal from "./TransactionModal";
 import SuspendModal from "./SuspendModal";
 import { Label } from '@/components/ui/label';
 import { Input } from "../ui/input";
-import { format } from "date-fns"
-
-import { cn } from "@/lib/utils"
-import { Calendar } from "@/components/ui/calendar"
+import { format } from "date-fns";
+import { cn, debounce } from "@/lib/utils";
+import { Calendar } from "@/components/ui/calendar";
 import {
     Popover,
     PopoverContent,
     PopoverTrigger,
-} from "@/components/ui/popover"
+} from "@/components/ui/popover";
+import { fetchProductByNameSkuOrBarcode } from "@/lib/actions/product.actions";
+import { toast } from "../ui/use-toast";
+import { playErrorSound, playSuccessSound } from "@/lib/audio";
+
 // Define the type for the selectedUnits state
 type SelectedUnitsType = {
     [productId: string]: string;
@@ -32,14 +35,12 @@ const PosContent = ({ brands, categories, units }) => {
     const cart = useCart();
     const [date, setDate] = useState(new Date());
     const [customer, setCustomer] = useState('Walk in Customer');
-    const [searchQuery, setSearchQuery] = useState('')
+    const [searchQuery, setSearchQuery] = useState('');
     const [discount, setDiscount] = useState(0);
     const [tax, setTax] = useState(0);
-    const [shippingCharge, setShippingCharge] = useState(0)
-
-
-    // State to keep track of selected units for each product
+    const [shippingCharge, setShippingCharge] = useState(0);
     const [selectedUnits, setSelectedUnits] = useState<SelectedUnitsType>({});
+    const [quantity, setQuantity] = useState(1)
 
     const findPrice = (prices: any[], unitId: string) => {
         const priceObj = prices.find(price => price.unitId === unitId);
@@ -61,13 +62,71 @@ const PosContent = ({ brands, categories, units }) => {
         cart.decreaseQuantity(productId);
     };
 
+    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setSearchQuery(e.target.value);
+    };
+
+    const debouncedFetchProduct = useCallback(
+        debounce(async (query: string) => {
+            if (query.trim().length >= 2) {
+                try {
+                    const product = await fetchProductByNameSkuOrBarcode(query.trim());
+                    if (product) {
+                        playSuccessSound()
+                        cart.addItem({
+                            item: product,
+                            quantity
+                        });
+                        setSearchQuery("")
+                    }
+                } catch (error) {
+                    console.error("Error searching for product:", error);
+                    playErrorSound()
+                    setSearchQuery("")  
+                    toast({
+                        title: "Product not found",
+                        description: "Product not found. Please try again.",
+                        variant: "destructive",
+                    })
+                }
+            }
+        }, 400), // Adjust the delay as needed
+        []
+    );
+
+    useEffect(() => {
+        debouncedFetchProduct(searchQuery);
+    }, [searchQuery, debouncedFetchProduct]);
+
+    // useEffect(() => {
+    //     const fetchProduct = async () => {
+    //         if (searchQuery.trim().length >= 2) {
+    //             try {
+    //                 const product = await fetchProductByNameSkuOrBarcode(searchQuery.trim());
+    //                 console.log(product, "search product")
+    //                 if (product) {
+    //                     cart.addItem({
+    //                         item: product,
+    //                         quantity
+    //                     });
+    //                     setSearchQuery("")
+    //                 }
+    //             } catch (error) {
+    //                 console.error("Error searching for product:", error);
+    //             }
+    //         }
+    //     };
+
+    //     fetchProduct();
+    // }, [searchQuery]);
+
     const total = cart.cartItems.reduce((acc, cartItem) => {
         const selectedUnit = selectedUnits[cartItem.item._id] || units[0]._id;
         return acc + findPrice(cartItem.item.prices, selectedUnit) * cartItem.quantity;
     }, 0);
     const totalRounded = parseFloat(total.toFixed(2));
     const overallTotal = (totalRounded + shippingCharge + tax) - discount;
-    const overallRounded =  parseFloat(overallTotal.toFixed(2));
+    const overallRounded = parseFloat(overallTotal.toFixed(2));
 
     return (
         <>
@@ -76,27 +135,28 @@ const PosContent = ({ brands, categories, units }) => {
                     <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-8 h-full p-4">
                         <div className="col-span-2 rounded-lg bg-gray-200 h-full relative px-4">
                             <div className="bg-gray-200 p-4 sticky top-0 z-30">
-                                <form className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                                    <div className="">
-                                        <Label htmlFor="picture">Customer Name</Label>
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                    <div>
+                                        <Label htmlFor="customer">Customer Name</Label>
                                         <Input
                                             type="text"
+                                            id="customer"
                                             value={customer}
                                             onChange={(e) => setCustomer(e.target.value)}
                                         />
                                     </div>
-                                    <div className="">
-                                        <Label htmlFor="picture">Search Product</Label>
+                                    <div>
+                                        <Label htmlFor="search">Search Product</Label>
                                         <Input
                                             type="text"
+                                            id="search"
                                             placeholder="Eg.Product Name/SKU/Barcode"
                                             value={searchQuery}
-                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                            onChange={handleSearchChange}
                                         />
-
                                     </div>
-                                    <div className="">
-                                        <Label htmlFor="picture">Sales Date</Label>
+                                    <div>
+                                        <Label htmlFor="date">Sales Date</Label>
                                         <Popover>
                                             <PopoverTrigger asChild>
                                                 <Button
@@ -120,7 +180,7 @@ const PosContent = ({ brands, categories, units }) => {
                                             </PopoverContent>
                                         </Popover>
                                     </div>
-                                </form>
+                                </div>
                             </div>
                             <div className="absolute overflow-auto w-[96%] max-h-[75%] h-full p-4 bg-transparent rounded-lg">
                                 <h2 className="text-lg font-bold mb-4 border-b-2">Products In Cart</h2>
@@ -128,7 +188,7 @@ const PosContent = ({ brands, categories, units }) => {
                                     <div className="w-full mt-24 flex justify-center">
                                         <div className="p-6">
                                             <div className="flex flex-col items-center gap-4">
-                                                <h3 className="font-semibold text-xl md:text-3xl">Oops! Its Empty</h3>
+                                                <h3 className="font-semibold text-xl md:text-3xl">Oops! It's Empty</h3>
                                                 <p className="text-center">No product added yet. Start to add for more sales</p>
                                             </div>
                                         </div>
@@ -159,11 +219,10 @@ const PosContent = ({ brands, categories, units }) => {
                                                             +
                                                         </button>
                                                     </div>
-                                                    <div className="">
+                                                    <div>
                                                         <UnitSelection
                                                             SelectedUnit={(value) => handleUnitSelection(product.item._id, value)}
                                                             units={units}
-                                                        // selectedUnit={selectedUnit}
                                                         />
                                                     </div>
                                                 </div>
@@ -178,28 +237,28 @@ const PosContent = ({ brands, categories, units }) => {
                                 <div className="flex justify-around items-center">
                                     <div className="flex gap-2 text-sm">
                                         <h3 className="font-bold">Items:</h3>
-                                        <p className="">{cart.cartItems.length}</p>
+                                        <p>{cart.cartItems.length}</p>
                                     </div>
                                     <div className="flex text-sm gap-2">
                                         <h3 className="font-bold">Total:</h3>
-                                        <p className="">Gh{totalRounded}.00</p>
+                                        <p>Gh{totalRounded}.00</p>
                                     </div>
                                 </div>
                                 <div className="flex justify-around items-center">
                                     <div className="flex gap-2 text-sm">
                                         <h3 className="font-bold">Discount(-):</h3>
                                         <button><Edit className="w-4 h-4" /></button>
-                                        <p className=""> 000</p>
+                                        <p>000</p>
                                     </div>
                                     <div className="flex gap-2 text-sm">
                                         <h3 className="font-bold">Order Tax(+):</h3>
                                         <button><Edit className="w-4 h-4" /></button>
-                                        <p className=""> 000</p>
+                                        <p>000</p>
                                     </div>
                                     <div className="flex gap-2 text-sm">
                                         <h3 className="font-bold">Shipping(+):</h3>
                                         <button><Edit className="w-4 h-4" /></button>
-                                        <p className=""> 000</p>
+                                        <p>000</p>
                                     </div>
                                 </div>
                             </div>
@@ -214,7 +273,7 @@ const PosContent = ({ brands, categories, units }) => {
                     <SuspendModal />
                     <ProceedModal />
                     <CancelModal />
-                    <div className="">
+                    <div>
                         <p className="font-bold">Total Payable: <span className="text-green-500">Gh{overallRounded}.00</span></p>
                     </div>
                 </div>
@@ -228,10 +287,3 @@ const PosContent = ({ brands, categories, units }) => {
 };
 
 export default PosContent;
-
-{/* <button
-type="button"
-className="absolute top-9 right-3 bg-blue-500 text-white rounded-full p-1 hover:bg-blue-700"
->
-<Plus className="w-4 h-4" />
-</button> */}

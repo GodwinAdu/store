@@ -1,6 +1,5 @@
 "use client"
 
-"use client"
 import Calculator from '@/components/Calculator'
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
@@ -10,13 +9,13 @@ import Image from 'next/image'
 import React, { useState } from 'react'
 import FullScreenButton from '../FullScreen'
 
-const Nav = () => {
+const Nav = ({user}:{user:any}) => {
     const [isCalculatorOpen, setIsCalculatorOpen] = useState(false)
     return (
         <>
             <nav className='w-full h-14 shadow-lg bg-black flex justify-between items-center px-4 '>
                 <div className="text-white">
-                    Welcome username
+                    Welcome <span className='text-orange-600'>{user.username}</span>
                 </div>
                 <div className="flex gap-4 ">
                     <FullScreenButton />

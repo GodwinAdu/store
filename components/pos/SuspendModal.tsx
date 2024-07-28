@@ -25,7 +25,7 @@ const SuspendModal = () => {
     if (cart.cartItems.length === 0) {
       playWarningSound();
        toast({
-        title: "Hmmm",
+        title: "Warning !...",
         description: "Cart is empty. No Product to suspend.",
         variant:"warning"
       })

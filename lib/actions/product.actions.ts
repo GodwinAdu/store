@@ -114,3 +114,28 @@ export async function fetchProductInfinity(page: number, limit: number = 20) {
         return { products: [], total: 0 }; // Return an empty array and zero total in case of error
     }
 }
+
+export async function fetchProductByNameSkuOrBarcode(searchTerm: string) {
+    try {
+        await connectToDB();
+
+        const regex = new RegExp(`^${searchTerm}`, 'i'); // Case-insensitive match from the beginning
+
+        const product = await Product.findOne({
+            $or: [
+                { name: regex },
+                { sku: regex },
+                { barcode: regex }
+            ]
+        });
+
+        if (!product) {
+            throw new Error('Product not found');
+        }
+
+        return JSON.parse(JSON.stringify(product));
+    } catch (error) {
+        console.log("Error fetching product by name, SKU, or barcode", error);
+        throw error;
+    }
+}
