@@ -36,6 +36,7 @@ const ProductContainer = ({ brands, categories }) => {
             setLoading(true);
             try {
                 const response = await fetchProductInfinity(page, limit);
+                console.log(response,"response: ");
                 const newProducts = response.products.filter(product => !productSet.current.has(product._id));
 
                 // Add new product IDs to the set

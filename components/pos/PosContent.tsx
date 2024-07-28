@@ -1,23 +1,73 @@
 "use client"
 import { Button } from "@/components/ui/button";
-import { Clock, DollarSignIcon, Edit, HandCoins, Pause, Plus, PlusCircle } from "lucide-react";
+import { CalendarIcon, Clock, Delete, DollarSignIcon, Edit, HandCoins, Pause, Plus, PlusCircle } from "lucide-react";
 import ProductContainer from "./ProductContainer";
 import useCart from "@/lib/hooks/use-cart";
 import { useState } from "react";
+import UnitSelection from "../commons/UnitSelection";
+import DeleteProductCart from "./DeleteProductCart";
+import CancelModal from "./CancelModal";
+import AddProductModal from "./AddProductModal";
+import ExpensesModal from "./ExpensesModal";
+import ProceedModal from "./ProceedModal";
+import TransactionModal from "./TransactionModal";
+import SuspendModal from "./SuspendModal";
+import { Label } from '@/components/ui/label';
+import { Input } from "../ui/input";
+import { format } from "date-fns"
 
-const PosContent = ({ brands, categories }) => {
+import { cn } from "@/lib/utils"
+import { Calendar } from "@/components/ui/calendar"
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover"
+// Define the type for the selectedUnits state
+type SelectedUnitsType = {
+    [productId: string]: string;
+};
+
+const PosContent = ({ brands, categories, units }) => {
     const cart = useCart();
+    const [date, setDate] = useState(new Date());
+    const [customer, setCustomer] = useState('Walk in Customer');
+    const [searchQuery, setSearchQuery] = useState('')
+    const [discount, setDiscount] = useState(0);
+    const [tax, setTax] = useState(0);
+    const [shippingCharge, setShippingCharge] = useState(0)
 
-    const handleIncreaseQuantity = (productId) => {
+
+    // State to keep track of selected units for each product
+    const [selectedUnits, setSelectedUnits] = useState<SelectedUnitsType>({});
+
+    const findPrice = (prices: any[], unitId: string) => {
+        const priceObj = prices.find(price => price.unitId === unitId);
+        return priceObj ? priceObj.price : 0;
+    };
+
+    const handleUnitSelection = (productId: string, unitId: string) => {
+        setSelectedUnits(prevState => ({
+            ...prevState,
+            [productId]: unitId,
+        }));
+    };
+
+    const handleIncreaseQuantity = (productId: string) => {
         cart.increaseQuantity(productId);
     };
 
-    const handleDecreaseQuantity = (productId) => {
+    const handleDecreaseQuantity = (productId: string) => {
         cart.decreaseQuantity(productId);
     };
 
-    const total = cart.cartItems.reduce((acc, cartItem) => acc + cartItem.item.prices[0].price * cartItem.quantity, 0);
+    const total = cart.cartItems.reduce((acc, cartItem) => {
+        const selectedUnit = selectedUnits[cartItem.item._id] || units[0]._id;
+        return acc + findPrice(cartItem.item.prices, selectedUnit) * cartItem.quantity;
+    }, 0);
     const totalRounded = parseFloat(total.toFixed(2));
+    const overallTotal = (totalRounded + shippingCharge + tax) - discount;
+    const overallRounded =  parseFloat(overallTotal.toFixed(2));
 
     return (
         <>
@@ -28,42 +78,47 @@ const PosContent = ({ brands, categories }) => {
                             <div className="bg-gray-200 p-4 sticky top-0 z-30">
                                 <form className="grid grid-cols-2 md:grid-cols-3 gap-4">
                                     <div className="">
-                                        <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="walkInCustomer">
-                                            Walk-in Customer
-                                        </label>
-                                        <input
-                                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                                            id="walkInCustomer"
+                                        <Label htmlFor="picture">Customer Name</Label>
+                                        <Input
                                             type="text"
-                                            placeholder="Enter customer name"
+                                            value={customer}
+                                            onChange={(e) => setCustomer(e.target.value)}
                                         />
-                                    </div>
-                                    <div className=" relative">
-                                        <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="searchProduct">
-                                            Search Product
-                                        </label>
-                                        <input
-                                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                                            id="searchProduct"
-                                            type="text"
-                                            placeholder="Eg. Name/SKU/Barcode"
-                                        />
-                                        <button
-                                            type="button"
-                                            className="absolute top-9 right-3 bg-blue-500 text-white rounded-full p-1 hover:bg-blue-700"
-                                        >
-                                            <Plus className="w-4 h-4" />
-                                        </button>
                                     </div>
                                     <div className="">
-                                        <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="transactionDate">
-                                            Date
-                                        </label>
-                                        <input
-                                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                                            id="transactionDate"
-                                            type="date"
+                                        <Label htmlFor="picture">Search Product</Label>
+                                        <Input
+                                            type="text"
+                                            placeholder="Eg.Product Name/SKU/Barcode"
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
                                         />
+
+                                    </div>
+                                    <div className="">
+                                        <Label htmlFor="picture">Sales Date</Label>
+                                        <Popover>
+                                            <PopoverTrigger asChild>
+                                                <Button
+                                                    variant={"outline"}
+                                                    className={cn(
+                                                        "w-full justify-start text-left font-normal",
+                                                        !date && "text-muted-foreground"
+                                                    )}
+                                                >
+                                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                                    {date ? format(date, "PPP") : <span>Pick a date</span>}
+                                                </Button>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-auto p-0" align="start">
+                                                <Calendar
+                                                    mode="single"
+                                                    selected={date}
+                                                    onSelect={setDate}
+                                                    initialFocus
+                                                />
+                                            </PopoverContent>
+                                        </Popover>
                                     </div>
                                 </form>
                             </div>
@@ -80,43 +135,43 @@ const PosContent = ({ brands, categories }) => {
                                     </div>
                                 )}
                                 <ul className="space-y-4">
-                                    {cart?.cartItems.map((product) => (
-                                        <li key={product?.item?._id} className="p-4 flex justify-around items-center bg-gray-100 rounded-lg shadow">
-                                            <div className="text-sm">
-                                                <h2 className=" font-semibold">{product?.item?.name}</h2>
-                                                <p>{product.item.sku}</p>
-                                            </div>
-                                            <div className="flex flex-col gap-2 items-center space-x-2 text-sm">
-                                                <div className="flex gap-4">
-                                                    <button
-                                                        onClick={() => handleDecreaseQuantity(product.item._id)}
-                                                        className="px-2 py-1 bg-gray-300 rounded"
-                                                    >
-                                                        -
-                                                    </button>
-                                                    <p>Quantity: {product.quantity}</p>
-                                                    <button
-                                                        onClick={() => handleIncreaseQuantity(product.item._id)}
-                                                        className="px-2 py-1 bg-gray-300 rounded"
-                                                    >
-                                                        +
-                                                    </button>
+                                    {cart.cartItems.map((product) => {
+                                        const selectedUnit = selectedUnits[product.item._id] || units[0]._id;
+                                        return (
+                                            <li key={product.item._id} className="p-4 flex justify-around items-center bg-gray-100 rounded-lg shadow">
+                                                <div className="text-sm space-y-1">
+                                                    <h2 className="font-semibold">{product.item.name}</h2>
+                                                    <p className="text-xs text-gray-500">({product.item.sku})</p>
                                                 </div>
-                                                <div className="">
-                                                    <select name="cars" id="cars" className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                                                        <option value="volvo">Volvo</option>
-                                                        <option value="saab">Saab</option>
-                                                        <option value="mercedes">Mercedes</option>
-                                                        <option value="audi">Audi</option>
-                                                    </select>
+                                                <div className="flex flex-col gap-2 items-center space-x-2 text-sm">
+                                                    <div className="flex gap-4">
+                                                        <button
+                                                            onClick={() => handleDecreaseQuantity(product.item._id)}
+                                                            className="px-2 py-1 bg-gray-300 rounded"
+                                                        >
+                                                            -
+                                                        </button>
+                                                        <p>Quantity: {product.quantity}</p>
+                                                        <button
+                                                            onClick={() => handleIncreaseQuantity(product.item._id)}
+                                                            className="px-2 py-1 bg-gray-300 rounded"
+                                                        >
+                                                            +
+                                                        </button>
+                                                    </div>
+                                                    <div className="">
+                                                        <UnitSelection
+                                                            SelectedUnit={(value) => handleUnitSelection(product.item._id, value)}
+                                                            units={units}
+                                                        // selectedUnit={selectedUnit}
+                                                        />
+                                                    </div>
                                                 </div>
-                                            </div>
-                                            <p className="text-sm">Subtotal: ${product.quantity * product.item.price}</p>
-                                            <button onClick={()=> cart.removeItem(product.item._id)} className=" p-2 bg-red-500 text-white rounded">
-                                                Cancel
-                                            </button>
-                                        </li>
-                                    ))}
+                                                <p className="text-sm">Subtotal: <span className="font-extrabold">Gh{product.quantity * findPrice(product.item.prices, selectedUnit)}</span></p>
+                                                <DeleteProductCart product={product} />
+                                            </li>
+                                        );
+                                    })}
                                 </ul>
                             </div>
                             <div className="bg-transparent rounded-lg absolute bottom-0 w-[96%] flex flex-col gap-4">
@@ -127,7 +182,7 @@ const PosContent = ({ brands, categories }) => {
                                     </div>
                                     <div className="flex text-sm gap-2">
                                         <h3 className="font-bold">Total:</h3>
-                                        <p className="">{totalRounded}.00</p>
+                                        <p className="">Gh{totalRounded}.00</p>
                                     </div>
                                 </div>
                                 <div className="flex justify-around items-center">
@@ -155,17 +210,17 @@ const PosContent = ({ brands, categories }) => {
             </div>
             <div className="flex justify-between items-center px-4 pb-2">
                 <div className="flex gap-4 items-center">
-                    <Button variant="outline" size="sm"><PlusCircle className="mr-2 w-4 h-4" />New Product</Button>
-                    <Button className="bg-orange-500 hover:bg-orange-700" size="sm"><Pause className="mr-2 w-4 h-4" />Suspend</Button>
-                    <Button className="bg-green-500 hover:bg-green-700" size="sm"><HandCoins className="mr-2 w-4 h-4" />Proceed Payment</Button>
-                    <Button variant="destructive" size="sm">Cancel</Button>
+                    <AddProductModal />
+                    <SuspendModal />
+                    <ProceedModal />
+                    <CancelModal />
                     <div className="">
-                        <p className="font-bold">Total Payable: <span className="text-green-500">0</span></p>
+                        <p className="font-bold">Total Payable: <span className="text-green-500">Gh{overallRounded}.00</span></p>
                     </div>
                 </div>
                 <div className="flex gap-2 items-center">
-                    <Button size="sm"><DollarSignIcon className="mr-2 w-4 h-4" />Expenses</Button>
-                    <Button className="bg-blue-500 hover:bg-blue-700" size="sm"><Clock className="mr-2 w-4 h-4" />Recent Transactions</Button>
+                    <ExpensesModal />
+                    <TransactionModal />
                 </div>
             </div>
         </>
@@ -173,3 +228,10 @@ const PosContent = ({ brands, categories }) => {
 };
 
 export default PosContent;
+
+{/* <button
+type="button"
+className="absolute top-9 right-3 bg-blue-500 text-white rounded-full p-1 hover:bg-blue-700"
+>
+<Plus className="w-4 h-4" />
+</button> */}

@@ -27,19 +27,26 @@ const useCart = create(
         const isExisting = currentItems.find(
           (cartItem) => cartItem.item._id === item._id
         );
+        console.log(isExisting,"item already in cart")
 
         if (isExisting) {
-          return toast({
-            title: `Opps, Sorry`,
-            description: "Product already in the cart",
+          const updatedItems = currentItems.map(cartItem =>
+            cartItem.item._id === item._id
+              ? { ...cartItem, quantity: cartItem.quantity + 1 }
+              : cartItem
+          );
+          set({ cartItems: updatedItems });
+          toast({
+            title: `Great Job`,
+            description: "Quantity increased",
+          });
+        } else {
+          set({ cartItems: [...currentItems, { item, quantity, size }] });
+          toast({
+            title: `Great Job`,
+            description: "Item added to cart 🛒",
           });
         }
-
-        set({ cartItems: [...currentItems, { item, quantity, size }] });
-        toast({
-          title: `Great Job `,
-          description: "Item added to cart 🛒",
-        });
       },
       removeItem: (idToRemove: String) => {
         const newCartItems = get().cartItems.filter(
@@ -48,7 +55,7 @@ const useCart = create(
         set({ cartItems: newCartItems });
         toast({
           title: `Hmmm  `,
-          description: "Item remove from cart 🛒",
+          description: "Item remove from cart",
         });
       },
       increaseQuantity: (idToIncrease: String) => {
