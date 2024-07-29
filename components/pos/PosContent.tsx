@@ -1,6 +1,6 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import { CalendarIcon, Edit, Plus, PlusCircle } from "lucide-react";
+import { CalendarIcon, Edit, Plus, PlusCircle, ShoppingBag } from "lucide-react";
 import ProductContainer from "./ProductContainer";
 import useCart from "@/lib/hooks/use-cart";
 import { useCallback, useEffect, useState } from "react";
@@ -28,7 +28,7 @@ import { playErrorSound, playSuccessSound } from "@/lib/audio";
 
 // Define the type for the selectedUnits state
 type SelectedUnitsType = {
-    [productId: string]: string;
+    [name: string]: string;
 };
 
 const PosContent = ({ brands, categories, units }) => {
@@ -39,20 +39,14 @@ const PosContent = ({ brands, categories, units }) => {
     const [discount, setDiscount] = useState(0);
     const [tax, setTax] = useState(0);
     const [shippingCharge, setShippingCharge] = useState(0);
-    const [selectedUnits, setSelectedUnits] = useState<SelectedUnitsType>({});
+    const [selectedUnit, setSelectedUnit] = useState<SelectedUnitsType>('');
     const [quantity, setQuantity] = useState(1)
 
     const findPrice = (prices: any[], unitId: string) => {
-        const priceObj = prices.find(price => price.unitId === unitId);
+        const priceObj = prices?.find(price => price.name === unitId);
         return priceObj ? priceObj.price : 0;
     };
 
-    const handleUnitSelection = (productId: string, unitId: string) => {
-        setSelectedUnits(prevState => ({
-            ...prevState,
-            [productId]: unitId,
-        }));
-    };
 
     const handleIncreaseQuantity = (productId: string) => {
         cart.increaseQuantity(productId);
@@ -75,14 +69,15 @@ const PosContent = ({ brands, categories, units }) => {
                         playSuccessSound()
                         cart.addItem({
                             item: product,
-                            quantity
+                            quantity,
+                            unit:product.prices[0].name
                         });
                         setSearchQuery("")
                     }
                 } catch (error) {
                     console.error("Error searching for product:", error);
                     playErrorSound()
-                    setSearchQuery("")  
+                    setSearchQuery("")
                     toast({
                         title: "Product not found",
                         description: "Product not found. Please try again.",
@@ -120,9 +115,10 @@ const PosContent = ({ brands, categories, units }) => {
     //     fetchProduct();
     // }, [searchQuery]);
 
+
+    
     const total = cart.cartItems.reduce((acc, cartItem) => {
-        const selectedUnit = selectedUnits[cartItem.item._id] || units[0]._id;
-        return acc + findPrice(cartItem.item.prices, selectedUnit) * cartItem.quantity;
+        return acc + findPrice(cartItem.item.prices, cartItem.unit) * cartItem.quantity;
     }, 0);
     const totalRounded = parseFloat(total.toFixed(2));
     const overallTotal = (totalRounded + shippingCharge + tax) - discount;
@@ -132,8 +128,8 @@ const PosContent = ({ brands, categories, units }) => {
         <>
             <div className="h-full relative">
                 <div className="flex-1 md:overflow-hidden h-full">
-                    <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-8 h-full p-4">
-                        <div className="col-span-2 rounded-lg bg-gray-200 h-full relative px-4">
+                    <div className="grid grid-cols-1 gap-4 lg:grid-cols-5 lg:gap-8 h-full p-4">
+                        <div className="col-span-3 rounded-lg bg-gray-200 h-full relative px-4">
                             <div className="bg-gray-200 p-4 sticky top-0 z-30">
                                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                                     <div>
@@ -150,7 +146,7 @@ const PosContent = ({ brands, categories, units }) => {
                                         <Input
                                             type="text"
                                             id="search"
-                                            placeholder="Eg.Product Name/SKU/Barcode"
+                                            placeholder="product(barcode or sku) "
                                             value={searchQuery}
                                             onChange={handleSearchChange}
                                         />
@@ -174,7 +170,7 @@ const PosContent = ({ brands, categories, units }) => {
                                                 <Calendar
                                                     mode="single"
                                                     selected={date}
-                                                    onSelect={setDate}
+                                                    onSelect={(value) => setDate(value)}
                                                     initialFocus
                                                 />
                                             </PopoverContent>
@@ -187,8 +183,8 @@ const PosContent = ({ brands, categories, units }) => {
                                 {cart.cartItems.length === 0 && (
                                     <div className="w-full mt-24 flex justify-center">
                                         <div className="p-6">
-                                            <div className="flex flex-col items-center gap-4">
-                                                <h3 className="font-semibold text-xl md:text-3xl">Oops! It's Empty</h3>
+                                            <div className="flex flex-col items-center gap-4 items-center">
+                                                <h3 className="font-semibold text-xl md:text-3xl flex gap-2">Empty <ShoppingBag className="w-8 h-8" /></h3>
                                                 <p className="text-center">No product added yet. Start to add for more sales</p>
                                             </div>
                                         </div>
@@ -196,7 +192,7 @@ const PosContent = ({ brands, categories, units }) => {
                                 )}
                                 <ul className="space-y-4">
                                     {cart.cartItems.map((product) => {
-                                        const selectedUnit = selectedUnits[product.item._id] || units[0]._id;
+
                                         return (
                                             <li key={product.item._id} className="p-4 flex justify-around items-center bg-gray-100 rounded-lg shadow">
                                                 <div className="text-sm space-y-1">
@@ -220,13 +216,16 @@ const PosContent = ({ brands, categories, units }) => {
                                                         </button>
                                                     </div>
                                                     <div>
-                                                        <UnitSelection
-                                                            SelectedUnit={(value) => handleUnitSelection(product.item._id, value)}
-                                                            units={units}
+                                                    <UnitSelection
+                                                            selectedUnit={product.unit || product.item.prices[0]?.name}
+                                                            units={product.item.prices}
+                                                            onUnitChange={(value) => {
+                                                                cart.updateUnit(product.item._id, value);
+                                                            }}
                                                         />
                                                     </div>
                                                 </div>
-                                                <p className="text-sm">Subtotal: <span className="font-extrabold">Gh{product.quantity * findPrice(product.item.prices, selectedUnit)}</span></p>
+                                                <p className="text-sm">Subtotal: <span className="font-extrabold">Gh{product.quantity * findPrice(product.item.prices, (selectedUnit || product.unit as string))}</span></p>
                                                 <DeleteProductCart product={product} />
                                             </li>
                                         );
@@ -263,15 +262,16 @@ const PosContent = ({ brands, categories, units }) => {
                                 </div>
                             </div>
                         </div>
-                        <ProductContainer brands={brands} categories={categories} />
+                        <div className="col-span-2">
+                            <ProductContainer brands={brands} categories={categories} />
+                        </div>
                     </div>
                 </div>
             </div>
             <div className="flex justify-between items-center px-4 pb-2">
                 <div className="flex gap-4 items-center">
-                    <AddProductModal />
                     <SuspendModal />
-                    <ProceedModal />
+                    <ProceedModal products={cart.cartItems} total={overallRounded} items={cart.cartItems.length} />
                     <CancelModal />
                     <div>
                         <p className="font-bold">Total Payable: <span className="text-green-500">Gh{overallRounded}.00</span></p>

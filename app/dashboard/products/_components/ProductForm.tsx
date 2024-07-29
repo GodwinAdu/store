@@ -58,7 +58,7 @@ const formSchema = z.object({
     cost: z.coerce.number(),
     quantity: z.coerce.number(),
     prices: z.array(z.object({
-        unitId: z.string(),
+        name: z.string(),
         price: z.coerce.number(),
     })),
     taxes: z.array(z.object({
@@ -89,7 +89,7 @@ const ProductForm = ({ categories, brands, units }: ProductProps) => {
             size: [],
             cost: 0,
             quantity: 0,
-            prices: [{ unitId: "", price: 0 }],
+            prices: [{ name: "", price: 0 }],
             taxes: [{ name: "", amount: 0 }],
         },
     })
@@ -425,29 +425,19 @@ const ProductForm = ({ categories, brands, units }: ProductProps) => {
                                 <CardContent>
                                     {priceFields.map((field, index) => (
                                         <div key={field.id} className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
-                                            <FormField
-                                                control={form.control}
-                                                name={`prices.${index}.unitId`}
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel className={cn(index !== 0 && "sr-only")}>Unit</FormLabel>
-                                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                           <FormField
+                                                    control={form.control}
+                                                    name={`prices.${index}.name`}
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel className={cn(index !== 0 && "sr-only")}>Name</FormLabel>
                                                             <FormControl>
-                                                                <SelectTrigger>
-                                                                    <SelectValue placeholder="Select a unit" />
-                                                                </SelectTrigger>
+                                                                <Input type="text" placeholder="Eg. Piece, Single etch" {...field} />
                                                             </FormControl>
-                                                            <SelectContent>
-                                                                {units?.map((unit) => (
-                                                                    <SelectItem key={unit._id} value={unit._id}>{unit.name}</SelectItem>
-                                                                ))}
-                                                                <CreateUnit />
-                                                            </SelectContent>
-                                                        </Select>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
                                             <div className="flex gap-5 items-center">
                                                 <FormField
                                                     control={form.control}
@@ -480,7 +470,7 @@ const ProductForm = ({ categories, brands, units }: ProductProps) => {
                                         variant="outline"
                                         size="sm"
                                         className="mt-2"
-                                        onClick={() => appendPrice({ unitId: "", price: 0 })}
+                                        onClick={() => appendPrice({ name: "", price: 0 })}
                                     >
                                         Add Price
                                     </Button>

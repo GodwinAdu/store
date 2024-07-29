@@ -14,14 +14,14 @@ export async function currentProfile() {
             return null;
         };
 
-        const decode: string | JwtPayload = await jwt.verify(tokenValue.value, process.env.TOKEN_SECRET!);
+        const decode = await jwt.verify(tokenValue.value, process.env.TOKEN_SECRET!);
 
         // Check if the token has expired
         if (!decode) {
             return null;
         }
 
-        const user = await fetchUser(decode?.id!);
+        const user = await fetchUser(decode.id);
 
         if (!user) {
             return null;

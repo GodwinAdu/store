@@ -31,7 +31,27 @@ const UserSchema = new Schema({
     type: Boolean,
     default: false,
   },
-
+  createdBy:{
+    type: Schema.Types.ObjectId,
+    ref: "User",
+    default:null,
+  },
+  modifiedBy:{
+    type: Schema.Types.ObjectId,
+    ref: "User",
+    default:null,
+  },
+  mod_flag:{
+    type:Boolean,
+    default: false,
+  },
+  del_flag:{
+    type: Boolean,
+    default: false,
+  },
+  action_type:{
+    type:String,
+  }
 }, {
   timestamps: true,
 });

@@ -9,15 +9,27 @@ const CategorySchema = new Schema({
         trim: true,
     },
     code: String,
-    active:{
+    active: {
         type: Boolean,
         default: false,
     },
-    createdBy:{
+    createdBy: {
         type: Schema.Types.ObjectId,
-        ref: "User"
+        ref: "User",
+    },
+    modifiedBy: {
+        type: Schema.Types.ObjectId,
+        ref: "User",
+    },
+    mod_flag: {
+        type: Boolean,
+        default: false,
+    },
+    del_flag: {
+        type: Boolean,
+        default: false,
     }
-},{
+}, {
     timestamps: true,
     // versionKey: false,
     // minimize: false,

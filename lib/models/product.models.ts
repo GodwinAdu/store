@@ -42,9 +42,8 @@ const ProductSchema = new Schema({
     min: 0
   },
   prices: [{
-    unitId: {
-      type: Schema.Types.ObjectId,
-      ref: "Unit"
+    name: {
+      type: String
     },
     price: {
       type: Number,
@@ -58,6 +57,26 @@ const ProductSchema = new Schema({
       type: Number,
     },
   }],
+  createdBy: {
+    type: Schema.Types.ObjectId,
+    ref: "User",
+  },
+  modifiedBy: {
+    type: Schema.Types.ObjectId,
+    ref: "User",
+    default: null,
+  },
+  mod_flag: {
+    type: Boolean,
+    default: false,
+  },
+  del_flag: {
+    type: Boolean,
+    default: false,
+  },
+  action_type: {
+    type: String,
+  }
 }, { timestamps: true });
 
 const Product = models.Product || model("Product", ProductSchema);

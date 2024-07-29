@@ -4,6 +4,7 @@ import { hash } from "bcryptjs";
 import User from "../models/user.models";
 import { connectToDB } from "../mongoose"
 import { revalidatePath } from "next/cache";
+import { currentProfile } from "../helpers/current-user";
 
 interface UserProps {
     username: string;
@@ -19,6 +20,7 @@ interface UserProps {
 
 export async function createUser(values: UserProps, path?: string) {
     try {
+        const user = await currentProfile();
         const { username, email, password, phone, gender, country, address, isAdmin } = values;
         const hashedPassword = await hash(password, 10)
         await connectToDB();
@@ -37,7 +39,8 @@ export async function createUser(values: UserProps, path?: string) {
             address,
             country,
             isAdmin: isAdmin ?? false,
-
+            createdBy: user?._id ?? null,
+            action_type: "create",
         })
         await newUser.save();
 

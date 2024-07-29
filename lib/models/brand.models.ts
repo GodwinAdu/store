@@ -1,4 +1,4 @@
-import { Schema,models,model } from "mongoose";
+import { Schema, models, model } from "mongoose";
 
 const BrandSchema = new Schema({
     name: {
@@ -7,16 +7,28 @@ const BrandSchema = new Schema({
         unique: true,
         trim: true,
     },
-    code:String,
-    active:{
+    code: String,
+    active: {
         type: Boolean,
         default: false,
     },
-    createdBy:{
+    createdBy: {
         type: Schema.Types.ObjectId,
-        ref: "User"
+        ref: "User",
+    },
+    modifiedBy: {
+        type: Schema.Types.ObjectId,
+        ref: "User",
+    },
+    mod_flag: {
+        type: Boolean,
+        default: false,
+    },
+    del_flag: {
+        type: Boolean,
+        default: false,
     }
-},{
+}, {
     timestamps: true,
     // versionKey: false,
     // minimize: false,
@@ -24,6 +36,6 @@ const BrandSchema = new Schema({
 });
 
 
-const Brand = models.Brand || model("Brand",BrandSchema);
+const Brand = models.Brand || model("Brand", BrandSchema);
 
 export default Brand;

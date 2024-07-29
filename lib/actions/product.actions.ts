@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import Product from "../models/product.models";
 import { connectToDB } from "../mongoose";
+import { currentProfile } from "../helpers/current-user";
 
 interface ProductProps {
     name: string;
@@ -17,12 +18,13 @@ interface ProductProps {
     size?: string[] | undefined;
     cost?: number | undefined;
     quantity: number;
-    prices: { unitId: string; price: number }[];
+    prices: { name: string; price: number }[];
     taxes?: { name: string; amount: number }[] | undefined;
 
 }
 export async function createProduct(values: ProductProps, path: string) {
     try {
+        const user = await currentProfile();
         const { name, brandId, categoryId, expiryDate, barcode, sku, description, tags, color, size, cost, quantity, prices, taxes } = values;
 
         await connectToDB();
@@ -43,10 +45,12 @@ export async function createProduct(values: ProductProps, path: string) {
             tags: tags ?? "",
             color: color ?? "",
             size: size ?? "",
-            cost: quantity ?? "",
+            cost: cost ?? "",
             quantity,
             prices,
-            taxes: taxes ?? []
+            taxes: taxes ?? [],
+            createdBy:user?._id ,
+            action_type: "create",
         });
 
         await product.save();
@@ -123,7 +127,6 @@ export async function fetchProductByNameSkuOrBarcode(searchTerm: string) {
 
         const product = await Product.findOne({
             $or: [
-                { name: regex },
                 { sku: regex },
                 { barcode: regex }
             ]

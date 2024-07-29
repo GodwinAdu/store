@@ -1,7 +1,7 @@
 import { Schema, model, models } from "mongoose";
 
 const SalesSchema = new Schema({
-  customerId: {
+  customer: {
     type: String,
     required: true
   },
@@ -22,16 +22,16 @@ const SalesSchema = new Schema({
       type: Schema.Types.ObjectId,
       ref: 'Product',
     },
-    unitId: {
-      type: Schema.Types.ObjectId,
-      ref: 'Unit',
+    unit: {
+      type: String,
     },
     quantity: {
       type: Number,
-      min: 1
+      required: true,
     },
     price: {
       type: Number,
+      required: true
     }
   }],
   totalAmount: {
@@ -68,9 +68,28 @@ const SalesSchema = new Schema({
     type: String,
     enum: ['Completed', 'Cancelled', 'Suspended'],
     default: 'Completed'
+  },
+  createdBy: {
+    type: Schema.Types.ObjectId,
+    ref: "User",
+  },
+  modifiedBy: {
+    type: Schema.Types.ObjectId,
+    ref: "User",
+  },
+  mod_flag: {
+    type: Boolean,
+    default: false,
+  },
+  del_flag: {
+    type: Boolean,
+    default: false,
+  },
+  action_type: {
+    type: String,
   }
 }, { timestamps: true });
 
-const Sales = models.Sales || model("Sales", SalesSchema);
+const Sale = models.Sale || model("Sale", SalesSchema);
 
-export default Sales;
+export default Sale;

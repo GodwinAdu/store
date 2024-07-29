@@ -10,6 +10,10 @@ export interface Product {
     name: string;
     sku: string;
     imageUrl: string;
+    prices:{
+        name: string;
+        price: number;
+    }[]
 }
 
 
@@ -25,6 +29,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             cart.addItem({
                 item: product,
                 quantity,
+                unit:product.prices[0].name
             })
         }} className="bg-white shadow-md rounded-lg p-1">
             <Image
