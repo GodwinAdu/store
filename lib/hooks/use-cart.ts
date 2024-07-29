@@ -24,29 +24,30 @@ const useCart = create(
           addItem: (data: CartItem) => {
               const { item, quantity, unit } = data;
               const currentItems = get().cartItems; // all the items already in cart
-              const isExisting = currentItems.find(
-                  (cartItem) => cartItem.item._id === item._id
-              );
-              console.log(isExisting, "item already in cart");
+              set({ cartItems: [...currentItems, { item, quantity, unit }] });
+            //   const isExisting = currentItems.find(
+            //       (cartItem) => cartItem.item._id === item._id
+            //   );
+            //   console.log(isExisting, "item already in cart");
 
-              if (isExisting) {
-                  const updatedItems = currentItems.map(cartItem =>
-                      cartItem.item._id === item._id
-                          ? { ...cartItem, quantity: cartItem.quantity + 1 }
-                          : cartItem
-                  );
-                  set({ cartItems: updatedItems });
-                  toast({
-                      title: `Great Job`,
-                      description: "Quantity increased",
-                  });
-              } else {
-                  set({ cartItems: [...currentItems, { item, quantity, unit }] });
-                  toast({
-                      title: `Great Job`,
-                      description: "Item added to cart 🛒",
-                  });
-              }
+            //   if (isExisting) {
+            //       const updatedItems = currentItems.map(cartItem =>
+            //           cartItem.item._id === item._id
+            //               ? { ...cartItem, quantity: cartItem.quantity + 1 }
+            //               : cartItem
+            //       );
+            //       set({ cartItems: updatedItems });
+            //       toast({
+            //           title: `Great Job`,
+            //           description: "Quantity increased",
+            //       });
+            //   } else {
+            //       set({ cartItems: [...currentItems, { item, quantity, unit }] });
+            //       toast({
+            //           title: `Great Job`,
+            //           description: "Item added to cart 🛒",
+            //       });
+            //   }
           },
           removeItem: (idToRemove: string) => {
               const newCartItems = get().cartItems.filter(
