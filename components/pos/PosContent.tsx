@@ -25,6 +25,7 @@ import {
 import { fetchProductByNameSkuOrBarcode } from "@/lib/actions/product.actions";
 import { toast } from "../ui/use-toast";
 import { playErrorSound, playSuccessSound } from "@/lib/audio";
+import { v4 as uuidv4 } from "uuid";
 
 // Define the type for the selectedUnits state
 type SelectedUnitsType = {
@@ -68,6 +69,7 @@ const PosContent = ({ brands, categories, units }) => {
                     if (product) {
                         playSuccessSound()
                         cart.addItem({
+                            id: uuidv4(),
                             item: product,
                             quantity,
                             unit:product.prices[0].name
@@ -170,7 +172,7 @@ const PosContent = ({ brands, categories, units }) => {
                                                 <Calendar
                                                     mode="single"
                                                     selected={date}
-                                                    onSelect={(value) => setDate(value)}
+                                                    onSelect={setDate}
                                                     initialFocus
                                                 />
                                             </PopoverContent>
@@ -202,14 +204,14 @@ const PosContent = ({ brands, categories, units }) => {
                                                 <div className="flex flex-col gap-2 items-center space-x-2 text-sm">
                                                     <div className="flex gap-4">
                                                         <button
-                                                            onClick={() => handleDecreaseQuantity(product.item._id)}
+                                                            onClick={() => handleDecreaseQuantity(product.id)}
                                                             className="px-2 py-1 bg-gray-300 rounded"
                                                         >
                                                             -
                                                         </button>
                                                         <p>Quantity: {product.quantity}</p>
                                                         <button
-                                                            onClick={() => handleIncreaseQuantity(product.item._id)}
+                                                            onClick={() => handleIncreaseQuantity(product.id)}
                                                             className="px-2 py-1 bg-gray-300 rounded"
                                                         >
                                                             +
@@ -220,7 +222,7 @@ const PosContent = ({ brands, categories, units }) => {
                                                             selectedUnit={product.unit || product.item.prices[0]?.name}
                                                             units={product.item.prices}
                                                             onUnitChange={(value) => {
-                                                                cart.updateUnit(product.item._id, value);
+                                                                cart.updateUnit(product.id, value);
                                                             }}
                                                         />
                                                     </div>

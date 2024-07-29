@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button"
 import useCart from "@/lib/hooks/use-cart"
 import { Delete, DeleteIcon, Trash2 } from "lucide-react"
-const DeleteProductCart = ({ product }: { product: any }) => {
+const DeleteProductCart = ({ itemId}: { itemId: any }) => {
     const cart = useCart()
     return (
         <AlertDialog>
@@ -30,7 +30,7 @@ const DeleteProductCart = ({ product }: { product: any }) => {
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => cart.removeItem(product.item._id)} className="bg-red-500 hover:bg-red-700">Remove</AlertDialogAction>
+                    <AlertDialogAction onClick={() => cart.removeItem(itemId)} className="bg-red-500 hover:bg-red-700">Remove</AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>
