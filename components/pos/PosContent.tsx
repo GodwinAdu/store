@@ -228,7 +228,7 @@ const PosContent = ({ brands, categories, units }) => {
                                                     </div>
                                                 </div>
                                                 <p className="text-sm">Subtotal: <span className="font-extrabold">Gh{product.quantity * findPrice(product.item.prices, (selectedUnit || product.unit as string))}</span></p>
-                                                <DeleteProductCart product={product} />
+                                                <DeleteProductCart itemId={product.id} />
                                             </li>
                                         );
                                     })}
