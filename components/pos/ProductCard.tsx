@@ -2,7 +2,7 @@
 import useCart from '@/lib/hooks/use-cart';
 import Image from 'next/image';
 import React, { useState } from 'react';
-
+import { v4 as uuidv4 } from "uuid";
 
 // types/Product.ts
 export interface Product {
@@ -27,6 +27,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     return (
         <button onClick={() => {
             cart.addItem({
+                id:uuidv4(),
                 item: product,
                 quantity,
                 unit:product.prices[0].name

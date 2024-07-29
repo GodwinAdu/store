@@ -26,18 +26,66 @@ const useCart = create(
       cartItems: [],
       addItem: (data: CartItem) => {
         const { item, quantity, unit } = data;
-        const newCartItem: CartItem = {
-          id: uuidv4(), // Generate a unique ID for each cart item
-          item,
-          quantity,
-          unit,
-        };
         const currentItems = get().cartItems;
-        set({ cartItems: [...currentItems, newCartItem] });
-        toast({
-          title: `Great Job`,
-          description: "Item added to cart 🛒",
-        });
+
+        // Check if the product already exists in the cart
+        const existingProduct = currentItems.find(cartItem => cartItem.item._id === item._id && cartItem.unit === unit);
+
+        if (existingProduct) {
+          // If the product with the same unit already exists, find the next available unit
+          const existingUnits = currentItems
+            .filter(cartItem => cartItem.item._id === item._id)
+            .map(cartItem => cartItem.unit);
+
+          let unitToAdd = item.prices[0].name;
+          for (let i = 0; i < item.prices.length; i++) {
+            if (!existingUnits.includes(item.prices[i].name)) {
+              unitToAdd = item.prices[i].name;
+              break;
+            }
+          }
+
+          // If all units are exhausted, increase the quantity of the primary unit
+          if (existingUnits.length >= item.prices.length) {
+            const primaryUnitIndex = currentItems.findIndex(cartItem => cartItem.item._id === item._id && cartItem.unit === item.prices[0].name);
+            const newCartItems = currentItems.map((cartItem, index) =>
+              index === primaryUnitIndex
+                ? { ...cartItem, quantity: cartItem.quantity + quantity }
+                : cartItem
+            );
+            set({ cartItems: newCartItems });
+            toast({
+              title: `Quantity Increased`,
+              description: "Item quantity increased in the cart",
+            });
+          } else {
+            // Add the new cart item with the determined unit
+            const newCartItem: CartItem = {
+              id: uuidv4(), // Generate a unique ID for each cart item
+              item,
+              quantity,
+              unit: unitToAdd,
+            };
+            set({ cartItems: [...currentItems, newCartItem] });
+            toast({
+              title: `Great Job`,
+              description: "Item added to cart 🛒",
+            });
+          }
+        } else {
+          // If the product with the same unit does not exist, add it to the cart
+          const newCartItem: CartItem = {
+            id: uuidv4(), // Generate a unique ID for each cart item
+            item,
+            quantity,
+            unit: unit || item.prices[0].name,
+          };
+          set({ cartItems: [...currentItems, newCartItem] });
+          toast({
+            title: `Great Job`,
+            description: "Item added to cart 🛒",
+          });
+        }
       },
       removeItem: (idToRemove: string) => {
         const newCartItems = get().cartItems.filter(

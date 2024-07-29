@@ -224,6 +224,7 @@ const ProceedModal = ({ total, items, products }: { total: number; items: number
                       <thead>
                         <tr className="border-b">
                           <th className="py-2">Item</th>
+                          <th className="py-2">Unit</th>
                           <th className="py-2">Quantity</th>
                           <th className="py-2">Unit Price</th>
                           <th className="py-2">Total</th>
@@ -233,6 +234,7 @@ const ProceedModal = ({ total, items, products }: { total: number; items: number
                         {products.map((product, index) => (
                           <tr key={index} className="border-b">
                             <td className="py-2">{product.item.name}</td>
+                            <td className="py-2">{product.unit}</td>
                             <td className="py-2">{product.quantity}</td>
                             <td className="py-2">Gh {findPrice(product.item.prices, product.unit)}.00</td>
                             <td className="py-2">Gh {product.quantity * findPrice(product.item.prices, product.unit)}.00</td>
