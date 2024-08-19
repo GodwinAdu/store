@@ -35,10 +35,10 @@ export const calculateQuantity = (prices: { quantityPerUnit: number, stock: numb
 
 export const getUserDetails = async () => {
   // Get browser name
-  const browserName = navigator.userAgent;
+  const browserName = window.navigator.userAgent;
 
   // Get machine type (You can enhance this by using more detailed logic)
-  const machineType = navigator.platform || navigator.userAgent;
+  const machineType = window.navigator.platform || window.navigator.userAgent;
 
   // Get public IP and location (you can use an external service for this)
   const response = await fetch('https://ipapi.co/json/'); // Replace with your preferred IP-based geolocation service
