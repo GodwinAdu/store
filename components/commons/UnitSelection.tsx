@@ -19,8 +19,9 @@ const UnitSelection = ({ selectedUnit, units, onUnitChange }: UnitSelectionProps
         <Select
             onValueChange={(value) => onUnitChange(value)}
             value={selectedUnit} // Use the selected unit prop
+           
         >
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-[100px]">
                 <SelectValue placeholder="Select unit" />
             </SelectTrigger>
             <SelectContent>

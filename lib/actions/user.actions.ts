@@ -5,6 +5,8 @@ import User from "../models/user.models";
 import { connectToDB } from "../mongoose"
 import { revalidatePath } from "next/cache";
 import { currentProfile } from "../helpers/current-user";
+import History from "../models/history.models";
+import { getUserDetails } from "../utils";
 
 interface UserProps {
     username: string;
@@ -41,8 +43,18 @@ export async function createUser(values: UserProps, path?: string) {
             isAdmin: isAdmin ?? false,
             createdBy: user?._id ?? null,
             action_type: "create",
-        })
-        await newUser.save();
+        });
+
+        const history = new History({
+            action: `Created new user (${values.username})`,
+            user: newUser._id,
+            details: await getUserDetails(),
+        });
+
+        await Promise.all([
+            newUser.save(),
+            history.save(),
+        ])
 
         if (path) {
             revalidatePath(path)
@@ -94,13 +106,19 @@ export async function deleteUser(id: string) {
 
 export async function updateUser(id: string, values: Partial<UserProps>, path: string) {
     try {
+        const user = await currentProfile();
         await connectToDB();
-        const user = await User.findByIdAndUpdate(id, values, { new: true });
-        if (!user) {
+        const updateValues = {
+            ...values,
+            modifiedBy: user._id,
+            mod_flag: true,
+        }
+        const updateUser = await User.findByIdAndUpdate(id, updateValues, { new: true });
+        if (!updateUser) {
             throw new Error("User not found")
         }
         revalidatePath(path)
-        return JSON.parse(JSON.stringify(user));
+        return JSON.parse(JSON.stringify(updateUser));
     } catch (error) {
         console.log("Error updating user ", error)
         throw error

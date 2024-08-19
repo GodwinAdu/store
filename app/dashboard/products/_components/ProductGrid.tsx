@@ -12,6 +12,8 @@ import CategorySelection from '@/components/commons/CategorySelection';
 import { toast } from '@/components/ui/use-toast';
 import { fetchProductsWithLimit } from '@/lib/actions/product.actions';
 import { CellAction } from './cell-action';
+import moment from 'moment';
+import { calculateQuantity } from '@/lib/utils';
 
 const ProductGrid = ({ brands, categories }: { brands: any[], categories: any[] }) => {
     const [selectedBrand, setSelectedBrand] = useState("");
@@ -27,7 +29,12 @@ const ProductGrid = ({ brands, categories }: { brands: any[], categories: any[] 
         try {
             setIsLoading(true);
             const response = await fetchProductsWithLimit();
-            setRowData(response);
+            const formattedData = response.map((row) => ({
+                ...row,
+                quantity:calculateQuantity(row.prices),
+                createdBy:row.createdBy.username
+            }));
+            setRowData(formattedData);
         } catch (error) {
             toast({
                 title: "Something went wrong",
@@ -44,9 +51,9 @@ const ProductGrid = ({ brands, categories }: { brands: any[], categories: any[] 
             { field: 'name', headerName: 'Product Name' },
             { field: 'sku', headerName: 'Product SKU' },
             { field: 'barcode', headerName: 'Product Barcode' },
-            { field: 'expiryDate', headerName: 'Expiry Date' },
             { field: 'cost', headerName: 'Product Cost' },
             { field: 'quantity', headerName: 'Product Quantity' },
+            { field: 'createdBy', headerName: 'Created By' },
             {
                 field: "actions",
                 headerName: "Actions",

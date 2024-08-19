@@ -1,8 +1,17 @@
-export const generateUniqueBarcode = () => {
-    const timestamp = Date.now().toString(); // Current timestamp in milliseconds
-    const randomPart = Math.random().toString(36).substring(2, 10).toUpperCase(); // Random 8-character alphanumeric string
-    
-    return `${timestamp}-${randomPart}`;
-  };
+export function generateRandomCodes(length: number, numberOfCodes: number) {
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  const codes = [];
 
-  
+  for (let i = 0; i < numberOfCodes; i++) {
+    let code = '';
+    for (let j = 0; j < length; j++) {
+      const randomIndex = Math.floor(Math.random() * characters.length);
+      code += characters[randomIndex];
+    }
+    codes.push(code);
+  }
+
+  return codes[0];
+}
+
+

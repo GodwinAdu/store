@@ -26,13 +26,14 @@ import { fetchProductByNameSkuOrBarcode } from "@/lib/actions/product.actions";
 import { toast } from "../ui/use-toast";
 import { playErrorSound, playSuccessSound } from "@/lib/audio";
 import { v4 as uuidv4 } from "uuid";
+import OrderModal from "./OrderModal";
 
 // Define the type for the selectedUnits state
 type SelectedUnitsType = {
     [name: string]: string;
 };
 
-const PosContent = ({ brands, categories, units }) => {
+const PosContent = ({ brands, categories, accounts }) => {
     const cart = useCart();
     const [date, setDate] = useState(new Date());
     const [customer, setCustomer] = useState('Walk in Customer');
@@ -72,7 +73,7 @@ const PosContent = ({ brands, categories, units }) => {
                             id: uuidv4(),
                             item: product,
                             quantity,
-                            unit:product.prices[0].name
+                            unit: product.prices[0].name
                         });
                         setSearchQuery("")
                     }
@@ -118,7 +119,7 @@ const PosContent = ({ brands, categories, units }) => {
     // }, [searchQuery]);
 
 
-    
+
     const total = cart.cartItems.reduce((acc, cartItem) => {
         return acc + findPrice(cartItem.item.prices, cartItem.unit) * cartItem.quantity;
     }, 0);
@@ -134,7 +135,7 @@ const PosContent = ({ brands, categories, units }) => {
                         <div className="col-span-3 rounded-lg bg-gray-200 h-full relative px-4">
                             <div className="bg-gray-200 p-4 sticky top-0 z-30">
                                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                                    <div>
+                                    <div className="space-y-2">
                                         <Label htmlFor="customer">Customer Name</Label>
                                         <Input
                                             type="text"
@@ -143,7 +144,7 @@ const PosContent = ({ brands, categories, units }) => {
                                             onChange={(e) => setCustomer(e.target.value)}
                                         />
                                     </div>
-                                    <div>
+                                    <div className="space-y-2">
                                         <Label htmlFor="search">Search Product</Label>
                                         <Input
                                             type="text"
@@ -153,7 +154,7 @@ const PosContent = ({ brands, categories, units }) => {
                                             onChange={handleSearchChange}
                                         />
                                     </div>
-                                    <div>
+                                    <div className="space-y-2">
                                         <Label htmlFor="date">Sales Date</Label>
                                         <Popover>
                                             <PopoverTrigger asChild>
@@ -201,7 +202,7 @@ const PosContent = ({ brands, categories, units }) => {
                                                     <h2 className="font-semibold">{product.item.name}</h2>
                                                     <p className="text-xs text-gray-500">({product.item.sku})</p>
                                                 </div>
-                                                <div className="flex flex-col gap-2 items-center space-x-2 text-sm">
+                                                <div className="flex flex-col justify-center gap-2 items-center text-sm">
                                                     <div className="flex gap-4">
                                                         <button
                                                             onClick={() => handleDecreaseQuantity(product.id)}
@@ -209,7 +210,23 @@ const PosContent = ({ brands, categories, units }) => {
                                                         >
                                                             -
                                                         </button>
-                                                        <p>Quantity: {product.quantity}</p>
+                                                        <input
+                                                            type="number"
+                                                            value={product.quantity || ''}
+                                                            onChange={(e) => {
+                                                                const value = e.target.value;
+                                                                if (value === '') {
+                                                                    cart.updateQuantity(product.id, 1);
+                                                                } else {
+                                                                    const newQuantity = parseInt(value, 10);
+                                                                    if (!isNaN(newQuantity) && newQuantity >= 1) {
+                                                                        cart.updateQuantity(product.id, newQuantity);
+                                                                    }
+                                                                }
+                                                            }}
+                                                            className="w-12 text-center"
+                                                            min="1"
+                                                        />
                                                         <button
                                                             onClick={() => handleIncreaseQuantity(product.id)}
                                                             className="px-2 py-1 bg-gray-300 rounded"
@@ -218,7 +235,7 @@ const PosContent = ({ brands, categories, units }) => {
                                                         </button>
                                                     </div>
                                                     <div>
-                                                    <UnitSelection
+                                                        <UnitSelection
                                                             selectedUnit={product.unit || product.item.prices[0]?.name}
                                                             units={product.item.prices}
                                                             onUnitChange={(value) => {
@@ -249,23 +266,23 @@ const PosContent = ({ brands, categories, units }) => {
                                     <div className="flex gap-2 text-sm">
                                         <h3 className="font-bold">Discount(-):</h3>
                                         <button><Edit className="w-4 h-4" /></button>
-                                        <p>000</p>
+                                        <p className="font-bold">0.00</p>
                                     </div>
                                     <div className="flex gap-2 text-sm">
                                         <h3 className="font-bold">Order Tax(+):</h3>
                                         <button><Edit className="w-4 h-4" /></button>
-                                        <p>000</p>
+                                        <p>0.00</p>
                                     </div>
                                     <div className="flex gap-2 text-sm">
                                         <h3 className="font-bold">Shipping(+):</h3>
                                         <button><Edit className="w-4 h-4" /></button>
-                                        <p>000</p>
+                                        <p>0.00</p>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         <div className="col-span-2">
-                            <ProductContainer brands={brands} categories={categories} />
+                            <ProductContainer  brands={brands} categories={categories} />
                         </div>
                     </div>
                 </div>
@@ -273,8 +290,9 @@ const PosContent = ({ brands, categories, units }) => {
             <div className="flex justify-between items-center px-4 pb-2">
                 <div className="flex gap-4 items-center">
                     <SuspendModal />
-                    <ProceedModal products={cart.cartItems} total={overallRounded} items={cart.cartItems.length} />
-                    <CancelModal />
+                    <OrderModal accounts={accounts} total={overallRounded} customer={customer} />
+                    <ProceedModal accounts={accounts} total={overallRounded} items={cart.cartItems.length} customer={customer} />
+                    <CancelModal /> 
                     <div>
                         <p className="font-bold">Total Payable: <span className="text-green-500">Gh{overallRounded}.00</span></p>
                     </div>

@@ -33,14 +33,13 @@ import { cn } from "@/lib/utils"
 import { format } from "date-fns"
 import { Calendar } from "@/components/ui/calendar"
 import MultiText from "@/components/commons/MultiText"
-import { createUnit } from '@/lib/actions/unit.actions';
-import { CreateUnit } from "./CreateUnit"
 import { CreateCategory } from "./CreateCategories"
 import { CreateBrand } from "./CreateBrand"
 import { playErrorSound, playSuccessSound } from "@/lib/audio"
 import { toast } from "@/components/ui/use-toast"
-import { createProduct } from "@/lib/actions/product.actions"
+import { createProduct, updateProduct } from "@/lib/actions/product.actions"
 import { usePathname, useRouter } from "next/navigation"
+import { Checkbox } from "@/components/ui/checkbox"
 
 const formSchema = z.object({
     name: z.string().min(2, {
@@ -49,36 +48,38 @@ const formSchema = z.object({
     brandId: z.string(),
     categoryId: z.string(),
     expiryDate: z.date().optional(),
-    barcode: z.string(),
-    sku: z.string(),
+    barcode: z.string().optional(),
+    sku: z.string().optional(),
     description: z.string().optional(),
     tags: z.array(z.string()).optional(),
     color: z.array(z.string()).optional(),
     size: z.array(z.string()).optional(),
     cost: z.coerce.number(),
-    quantity: z.coerce.number(),
+    minimumQuantity: z.coerce.number(),
     prices: z.array(z.object({
         name: z.string(),
         price: z.coerce.number(),
+        quantityPerUnit: z.coerce.number(),
+        stock: z.coerce.number(),
     })),
-    taxes: z.array(z.object({
-        name: z.string(),
-        amount: z.coerce.number()
-    })).optional(),
+    taxes: z.coerce.number().optional(),
+    discount: z.coerce.number().optional(),
+    active: z.boolean()
 })
 
 interface ProductProps {
     categories: any[];
     brands: any[];
-    units: any[];
+    type: "create" | "update";
+    initialData?: any;
 }
-const ProductForm = ({ categories, brands, units }: ProductProps) => {
+const ProductForm = ({ type, initialData, categories, brands }: ProductProps) => {
     const router = useRouter();
     const path = usePathname();
     // 1. Define your form.
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
-        defaultValues: {
+        defaultValues: initialData ?? {
             name: "",
             brandId: "",
             categoryId: "",
@@ -88,16 +89,17 @@ const ProductForm = ({ categories, brands, units }: ProductProps) => {
             color: [],
             size: [],
             cost: 0,
-            quantity: 0,
-            prices: [{ name: "", price: 0 }],
-            taxes: [{ name: "", amount: 0 }],
+            minimumQuantity: 0,
+            prices: [{ name: "", price: 0, quantityPerUnit: 0, stock: 0 }],
+            active: false,
         },
-    })
-
-    const { fields: taxFields, append: appendTax, remove: removeTax } = useFieldArray({
-        name: "taxes",
-        control: form.control,
     });
+
+    const { isSubmitting } = form.formState
+
+    const submit = initialData ? "Update Product" : "Add Product";
+    const submitting = initialData ? "Updating ..." : "Adding ...";
+
 
     const { fields: priceFields, append: appendPrice, remove: removePrice } = useFieldArray({
         name: "prices",
@@ -107,8 +109,13 @@ const ProductForm = ({ categories, brands, units }: ProductProps) => {
     // 2. Define a submit handler.
     async function onSubmit(values: z.infer<typeof formSchema>) {
         try {
-            console.log(values)
-            await createProduct(values, path);
+            if (type === "create") {
+                await createProduct(values, path);
+            }
+
+            if (type === "update") {
+                await updateProduct(initialData._id, values, path);
+            }
             playSuccessSound();
             form.reset();
             router.push(`/dashboard/products`);
@@ -247,7 +254,7 @@ const ProductForm = ({ categories, brands, units }: ProductProps) => {
                                         <FormItem>
                                             <FormLabel>SKU</FormLabel>
                                             <FormControl>
-                                                <Input placeholder="Add product SKU" {...field} />
+                                                <Input placeholder="leave empty to auto generate" {...field} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -260,7 +267,7 @@ const ProductForm = ({ categories, brands, units }: ProductProps) => {
                                         <FormItem>
                                             <FormLabel>Barcode</FormLabel>
                                             <FormControl>
-                                                <Input placeholder="Add product Barcode" {...field} />
+                                                <Input placeholder="leave empty to auto generate" {...field} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -357,65 +364,87 @@ const ProductForm = ({ categories, brands, units }: ProductProps) => {
                                         </FormItem>
                                     )}
                                 />
+                                <div className="flex gap-6">
+                                    <FormField
+                                        control={form.control}
+                                        name="minimumQuantity"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Minimum Quantity</FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="leave empty to auto generate" {...field} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="active"
+                                        render={({ field }) => (
+                                            <FormItem className="flex items-center  space-x-3 space-y-0 rounded-md  p-2">
+                                                <FormLabel>
+                                                    Active
+                                                </FormLabel>
+                                                <FormControl>
+                                                    <Checkbox
+                                                        checked={field.value}
+                                                        onCheckedChange={field.onChange}
+                                                    />
+                                                </FormControl>
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
                             </CardContent>
                         </Card>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                             <Card>
                                 <CardHeader>
-                                    <CardTitle>Product Taxes (Optional)</CardTitle>
+                                    <CardTitle>Product (Cost,Discount, Taxes)</CardTitle>
                                 </CardHeader>
                                 <CardContent>
-                                    {taxFields.map((field, index) => (
-                                        <div key={field.id} className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
-                                            <FormField
-                                                control={form.control}
-                                                name={`taxes.${index}.name`}
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel className={cn(index !== 0 && "sr-only")}>Tax Name</FormLabel>
-                                                        <FormControl>
-                                                            <Input placeholder="Enter tax name" {...field} />
-                                                        </FormControl>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
-                                            <div className="flex gap-5 items-center">
-                                                <FormField
-                                                    control={form.control}
-                                                    name={`taxes.${index}.amount`}
-                                                    render={({ field }) => (
-                                                        <FormItem>
-                                                            <FormLabel className={cn(index !== 0 && "sr-only")}>Tax Amount</FormLabel>
-                                                            <FormControl>
-                                                                <Input type="number" placeholder="Enter tax amount" {...field} />
-                                                            </FormControl>
-                                                            <FormMessage />
-                                                        </FormItem>
-                                                    )}
-                                                />
-                                                {index !== 0 && (
-                                                    <Button
-                                                        type="button"
-                                                        variant="outline"
-                                                        size="icon"
-                                                        onClick={() => removeTax(index)}
-                                                    >
-                                                        <X className="w-4 h-4" />
-                                                    </Button>
-                                                )}
-                                            </div>
-                                        </div>
-                                    ))}
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="sm"
-                                        className="mt-2"
-                                        onClick={() => appendTax({ name: "", amount: 0 })}
-                                    >
-                                        Add Tax
-                                    </Button>
+                                    <div className="grid grid-cols-2 gap-5">
+                                        <FormField
+                                            control={form.control}
+                                            name="taxes"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Tax Amount</FormLabel>
+                                                    <FormControl>
+                                                        <Input type="number" placeholder="Enter tax amount(Optional)" {...field} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="discount"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel >Discount</FormLabel>
+                                                    <FormControl>
+                                                        <Input type="number" placeholder="Enter discount (Optional)" {...field} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="cost"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel >Purchase Cost</FormLabel>
+                                                    <FormControl>
+                                                        <Input type="number" placeholder="" {...field} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
                                 </CardContent>
                             </Card>
                             <Card>
@@ -424,21 +453,47 @@ const ProductForm = ({ categories, brands, units }: ProductProps) => {
                                 </CardHeader>
                                 <CardContent>
                                     {priceFields.map((field, index) => (
-                                        <div key={field.id} className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
-                                           <FormField
-                                                    control={form.control}
-                                                    name={`prices.${index}.name`}
-                                                    render={({ field }) => (
-                                                        <FormItem>
-                                                            <FormLabel className={cn(index !== 0 && "sr-only")}>Name</FormLabel>
-                                                            <FormControl>
-                                                                <Input type="text" placeholder="Eg. Piece, Single etch" {...field} />
-                                                            </FormControl>
-                                                            <FormMessage />
-                                                        </FormItem>
-                                                    )}
-                                                />
-                                            <div className="flex gap-5 items-center">
+                                        <div key={field.id} className="grid grid-cols-2 md:grid-cols-4 gap-6 py-4">
+                                            <FormField
+                                                control={form.control}
+                                                name={`prices.${index}.name`}
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel className={cn(index !== 0 && "sr-only")}>Name</FormLabel>
+                                                        <FormControl>
+                                                            <Input type="text" placeholder="Eg. Piece, Single etch" {...field} />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                            <FormField
+                                                control={form.control}
+                                                name={`prices.${index}.quantityPerUnit`}
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel className={cn(index !== 0 && "sr-only")}>Per unit</FormLabel>
+                                                        <FormControl>
+                                                            <Input type="number" min={1} {...field} />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                            <FormField
+                                                control={form.control}
+                                                name={`prices.${index}.stock`}
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel className={cn(index !== 0 && "sr-only")}>Stock</FormLabel>
+                                                        <FormControl>
+                                                            <Input type="number" min={1} {...field} />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                            <div className="flex gap-2 items-center">
                                                 <FormField
                                                     control={form.control}
                                                     name={`prices.${index}.price`}
@@ -470,7 +525,7 @@ const ProductForm = ({ categories, brands, units }: ProductProps) => {
                                         variant="outline"
                                         size="sm"
                                         className="mt-2"
-                                        onClick={() => appendPrice({ name: "", price: 0 })}
+                                        onClick={() => appendPrice({ name: "", quantityPerUnit: 0, stock: 0, price: 0 })}
                                     >
                                         Add Price
                                     </Button>
@@ -478,13 +533,14 @@ const ProductForm = ({ categories, brands, units }: ProductProps) => {
                             </Card>
                         </div>
                         <div className="flex justify-end">
-
-                            <Button type="submit">New Product</Button>
+                            <Button type="submit" disabled={isSubmitting}>
+                                {isSubmitting ? submitting : submit}
+                            </Button>
                         </div>
                     </form>
                 </Form>
             </CardContent>
-        </Card>
+        </Card >
     )
 }
 

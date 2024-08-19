@@ -8,5 +8,5 @@ export const generateUniqueSKU = (productName:string) => {
     
     const productPrefix = productName.substring(0, 3).toUpperCase(); // First three letters of product name
     
-    return `${productPrefix}-${year}${month}${day}-${randomPart}`;
+    return `${randomPart}-${year}${month}${day}-${productPrefix}`;
   };

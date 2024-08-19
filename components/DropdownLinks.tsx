@@ -24,10 +24,12 @@ export function DropdownLinks() {
       <DropdownMenuTrigger asChild>
         <Button variant="outline"><DoorOpen /></Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-96">
-        <DropdownMenuLabel>Appearance</DropdownMenuLabel>
+      <DropdownMenuContent className="w-72">
+        <DropdownMenuLabel>Menu</DropdownMenuLabel>
         <DropdownMenuSeparator />
+        <div className="py-4">
 
+        </div>
       </DropdownMenuContent>
     </DropdownMenu>
   )

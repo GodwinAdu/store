@@ -73,7 +73,7 @@ export const CellAction: React.FC<CellActionProps> = ({
                 <DropdownMenuContent align="end">
                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
                     <Link
-                        href={`/dashboard/products/brands/${data?._id}`}
+                        href={`/dashboard/products/${data?._id}`}
                     >
                         <DropdownMenuItem>
                             <Edit className="mr-2 h-4 w-4" /> Update

@@ -36,27 +36,35 @@ const ProductSchema = new Schema({
     default: 0,
     min: 0
   },
-  quantity: {
+  minimumQuantity: {
     type: Number,
-    default: 0,
-    min: 0
   },
   prices: [{
     name: {
       type: String
     },
+    stock: {
+      type: Number,
+    },
+    quantityPerUnit: {
+      type: Number,
+    },
     price: {
       type: Number,
     },
   }],
-  taxes: [{
-    name: {
-      type: String,
-    },
-    amount: {
-      type: Number,
-    },
-  }],
+  taxes: {
+    type: Number,
+    default: 0
+  },
+  discount: {
+    type: Number,
+    default: 0
+  },
+  active: {
+    type: Boolean,
+    default: true,
+  },
   createdBy: {
     type: Schema.Types.ObjectId,
     ref: "User",

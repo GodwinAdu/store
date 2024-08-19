@@ -27,12 +27,12 @@ const BrandSchema = new Schema({
     del_flag: {
         type: Boolean,
         default: false,
+    },
+    action_type: {
+        type: String,
     }
 }, {
     timestamps: true,
-    // versionKey: false,
-    // minimize: false,
-    // toObject: { virtuals: true }
 });
 
 

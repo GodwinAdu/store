@@ -9,10 +9,10 @@ import Link from 'next/link'
 import React from 'react'
 import { fetchAllBrands } from '@/lib/actions/brand.actions'
 import { fetchAllCategories } from '@/lib/actions/category.actions'
+import SaleGrid from './_components/SaleGrid'
 
 const page = async () => {
-  const brands = await fetchAllBrands() || [];
-  const categories = await fetchAllCategories() || [];
+  
   return (
     <>
       <div className="flex justify-between items-center px-3">
@@ -39,7 +39,7 @@ const page = async () => {
       <Separator />
       {/* <DataTable searchKey='username' data={data} columns={columns} /> */}
       <div className="">
-        {/* <ProductGrid brands={brands} categories={categories} /> */}
+        <SaleGrid />
       </div>
     </>
   )

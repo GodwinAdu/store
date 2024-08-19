@@ -2,7 +2,7 @@ import { Schema, model, models } from "mongoose";
 
 const TransactionSchema = new Schema({
   name: String,
-  discription: String,
+  description: String,
   price: Number,
   category: String,
   picture: String,

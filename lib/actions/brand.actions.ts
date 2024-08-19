@@ -6,6 +6,8 @@ import Brand from "../models/brand.models";
 import { connectToDB } from "../mongoose";
 import { generateCode } from "../helpers/generate-code";
 import Product from "../models/product.models";
+import History from "../models/history.models";
+import { getUserDetails } from "../utils";
 
 
 interface BrandProps {
@@ -29,8 +31,16 @@ export async function createBrand(values: BrandProps) {
             code: generateCode(),
             createdBy: user?._id
         });
+        const history = new History({
+            action: "New Brand Created",
+            user: user._id,
+            details: await getUserDetails(),
+        });
 
-        await brand.save();
+        await Promise.all([
+            brand.save(),
+            history.save(),
+        ])
 
     } catch (error) {
         console.log("Error creating brand ", error)
@@ -78,11 +88,25 @@ export async function updateBrand(id: string, values: Partial<BrandProps>, path:
     try {
         await connectToDB();
         const user = await currentProfile()
-        const brand = await Brand.findByIdAndUpdate(id, values, { new: true })
+          // Add modifiedBy and mod_flag to the values object
+          const updateValues = {
+            ...values,
+            modifiedBy: user._id,
+            mod_flag: true,
+        };
+
+        const brand = await Brand.findByIdAndUpdate(id, updateValues, { new: true })
 
         if (!brand) {
             throw new Error("Brand not found")
         }
+
+        const history = new History({
+            action:`Update Brand ${values.name}`,
+            user: user._id,
+            details: await getUserDetails(),
+        });
+        await history.save();
 
         revalidatePath(path)
         return JSON.parse(JSON.stringify(brand));

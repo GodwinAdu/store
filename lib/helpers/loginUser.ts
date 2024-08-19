@@ -5,6 +5,8 @@ import { connectToDB } from "../mongoose";
 import User from "../models/user.models";
 import { compare } from "bcryptjs";
 import jwt from 'jsonwebtoken';
+import History from "../models/history.models";
+import { getUserDetails } from "../utils";
 
 interface LoginProps {
     email: string;
@@ -36,7 +38,14 @@ export async function loginUser({ email, password }: LoginProps) {
         } else {
             console.log("student is login")
         }
+        const history = new History({
+            action: "User logged in",
+            user: user._id,
+            details: await getUserDetails(),
+        });
 
+        await history.save();
+    
         const token = await jwt.sign(tokenData, process.env.TOKEN_SECRET!, { expiresIn: '1d' });
 
         cookieStore.set("token", token,

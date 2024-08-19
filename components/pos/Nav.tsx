@@ -8,6 +8,7 @@ import { CalculatorIcon } from 'lucide-react'
 import Image from 'next/image'
 import React, { useState } from 'react'
 import FullScreenButton from '../FullScreen'
+import { DropdownLinks } from '../DropdownLinks'
 
 const Nav = ({user}:{user:any}) => {
     const [isCalculatorOpen, setIsCalculatorOpen] = useState(false)
@@ -15,9 +16,10 @@ const Nav = ({user}:{user:any}) => {
         <>
             <nav className='w-full h-14 shadow-lg bg-black flex justify-between items-center px-4 '>
                 <div className="text-white">
-                    Welcome <span className='text-orange-600'>{user.username}</span>
+                    Welcome <span className='text-orange-600'>{user?.username}</span>
                 </div>
                 <div className="flex gap-4 ">
+                <DropdownLinks />
                     <FullScreenButton />
                     <div className="relative">
                         <TooltipProvider>

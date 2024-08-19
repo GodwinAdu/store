@@ -13,14 +13,26 @@ export async function middleware(request: NextRequest) {
     }
 
     let userRole = null;
+    let tokenExpired = false;
 
     if (token) {
         try {
             const { payload } = await jwtVerify(token.value, SECRET_KEY);
             userRole = payload.role; // Adjust according to your token structure
+            
+            // Check if the token has expired
+            const currentTime = Math.floor(Date.now() / 1000);
+            if (payload.exp! < currentTime) {
+                tokenExpired = true;
+            }
         } catch (error) {
             console.error('Invalid token:', error);
+            tokenExpired = true;
         }
+    }
+
+    if (tokenExpired) {
+        return NextResponse.redirect(new URL('/', request.url));
     }
 
     // Public routes

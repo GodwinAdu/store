@@ -7,11 +7,9 @@ const SalesSchema = new Schema({
   },
   billingAddress: {
     type: String,
-    required: true
   },
   shippingAddress: {
     type: String,
-    required: true
   },
   invoiceNo: {
     type: String,
@@ -38,20 +36,16 @@ const SalesSchema = new Schema({
     type: Number,
     required: true
   },
-  saleDate: {
-    type: Date,
-    default: Date.now
-  },
-  paymentAccount: {
+  accountId: {
     type: Schema.Types.ObjectId,
     ref: 'Account',
     required: true
   },
   paymentMethod: {
     type: String,
-    enum: ['Cash', 'Credit Card', 'Debit Card', 'Other'],
     required: true
   },
+  description:{type: String},
   discount: {
     type: Number,
     default: 0
@@ -66,7 +60,7 @@ const SalesSchema = new Schema({
   },
   status: {
     type: String,
-    enum: ['Completed', 'Cancelled', 'Suspended'],
+    enum: ['Completed','Cancelled', 'Suspended','Returned'],
     default: 'Completed'
   },
   createdBy: {
@@ -76,6 +70,7 @@ const SalesSchema = new Schema({
   modifiedBy: {
     type: Schema.Types.ObjectId,
     ref: "User",
+    default: null,
   },
   mod_flag: {
     type: Boolean,

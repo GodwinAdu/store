@@ -6,6 +6,8 @@ import Category from "../models/category.models";
 import { connectToDB } from "../mongoose";
 import { generateCode } from "../helpers/generate-code";
 import Product from "../models/product.models";
+import History from "../models/history.models";
+import { getUserDetails } from "../utils";
 
 interface CategoryProps {
     name: string;
@@ -23,7 +25,16 @@ export async function createCategory(values: CategoryProps) {
             code: generateCode(),
             createdBy: user?._id
         });
-        await category.save();
+        const history = new History({
+            action:`Update Category ${values.name}`,
+            user: user._id,
+            details: await getUserDetails(),
+        });
+
+        await Promise.all([
+            category.save(),
+            history.save(),
+        ])
         ;
     } catch (error) {
         console.log("Error creating category ", error)
@@ -66,10 +77,25 @@ export async function updateCategory(id: string, values: Partial<CategoryProps>,
     try {
         await connectToDB();
         const user = await currentProfile()
-        const category = await Category.findByIdAndUpdate(id, values, { new: true })
+          // Add modifiedBy and mod_flag to the values object
+          const updateValues = {
+            ...values,
+            modifiedBy: user._id,
+            mod_flag: true,
+        };
+
+        const category = await Category.findByIdAndUpdate(id, updateValues, { new: true })
         if (!category) {
             throw new Error("Category not found")
         }
+        const history = new History({
+            action:`Update Category ${values.name}`,
+            user: user._id,
+            details: await getUserDetails(),
+        });
+
+        await history.save()
+
         revalidatePath(path)
         return JSON.parse(JSON.stringify(category));
     } catch (error) {
