@@ -1,3 +1,4 @@
+import { headers } from 'next/headers';
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
 
@@ -33,16 +34,16 @@ export const calculateQuantity = (prices: { quantityPerUnit: number, stock: numb
 };
 
 
+
 export const getUserDetails = async () => {
-  // Get browser name
-  const browserName = window.navigator.userAgent;
+  // Get the headers from the request
+  const headersList = headers();
+  const userAgent = headersList.get('user-agent');
+  const platform = headersList.get('sec-ch-ua-platform') || userAgent;
 
-  // Get machine type (You can enhance this by using more detailed logic)
-  const machineType = window.navigator.platform || window.navigator.userAgent;
-
-  // Get public IP and location (you can use an external service for this)
-  const response = await fetch('https://ipapi.co/json/'); // Replace with your preferred IP-based geolocation service
-  const locationData = await response.json();
+  // Get public IP and location
+  const ipResponse = await fetch('https://ipapi.co/json/');
+  const locationData = await ipResponse.json();
 
   const location = {
     city: locationData.city,
@@ -52,10 +53,11 @@ export const getUserDetails = async () => {
   };
 
   return {
-    browserName,
-    machineType,
+    browserName: userAgent,
+    machineType: platform,
     location,
   };
 };
+
 
 

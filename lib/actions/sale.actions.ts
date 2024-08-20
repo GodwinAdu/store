@@ -3,7 +3,6 @@
 import { currentProfile } from "../helpers/current-user";
 import { generateUniqueInvoiceValue } from "../helpers/generate-invoice";
 import Account from "../models/account.models";
-import Deposit from "../models/deposit.models";
 import History from "../models/history.models";
 import Sale from "../models/sales.models";
 import { connectToDB } from "../mongoose";
@@ -11,14 +10,12 @@ import { startOfDay, endOfDay } from 'date-fns';
 import { calculateQuantity, getUserDetails } from "../utils";
 import Product from "../models/product.models";
 
-
 interface SaleProps {
     accountId: string;
     customer: string;
     billingAddress: string;
     shippingAddress: string;
     description?: string;
-    saleDate: Date;
     totalAmount: number;
     paymentMethod: string;
     taxes: number;
