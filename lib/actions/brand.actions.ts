@@ -7,7 +7,8 @@ import { connectToDB } from "../mongoose";
 import { generateCode } from "../helpers/generate-code";
 import Product from "../models/product.models";
 import History from "../models/history.models";
-import { getUserDetails } from "../utils";
+import { getUserDetails } from "../user-details";
+
 
 
 interface BrandProps {

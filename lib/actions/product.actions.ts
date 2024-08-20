@@ -7,7 +7,8 @@ import { currentProfile } from "../helpers/current-user";
 import { generateRandomCodes } from "../helpers/generate-barcode";
 import { generateUniqueSKU } from "../helpers/generate-sku";
 import History from "../models/history.models";
-import { getUserDetails } from "../utils";
+import { getUserDetails } from "../user-details";
+
 
 interface ProductProps {
     name: string;

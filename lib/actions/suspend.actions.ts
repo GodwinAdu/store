@@ -3,7 +3,7 @@
 import { currentProfile } from "../helpers/current-user";
 import History from "../models/history.models";
 import Suspend from "../models/suspend.model";
-import { getUserDetails } from "../utils";
+import { getUserDetails } from "../user-details";
 
 
 interface SuspendProps {

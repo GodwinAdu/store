@@ -7,8 +7,9 @@ import History from "../models/history.models";
 import Sale from "../models/sales.models";
 import { connectToDB } from "../mongoose";
 import { startOfDay, endOfDay } from 'date-fns';
-import { calculateQuantity, getUserDetails } from "../utils";
+import { calculateQuantity } from "../utils";
 import Product from "../models/product.models";
+import { getUserDetails } from "../user-details";
 
 interface SaleProps {
     accountId: string;

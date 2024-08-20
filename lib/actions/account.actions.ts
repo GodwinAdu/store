@@ -5,7 +5,8 @@ import Account from "../models/account.models";
 import { connectToDB } from "../mongoose";
 import { currentProfile } from "../helpers/current-user";
 import History from "../models/history.models";
-import { getUserDetails } from "../utils";
+import { getUserDetails } from "../user-details";
+
 
 interface CreateAccountProps {
     accountName: string;

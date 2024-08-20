@@ -5,7 +5,7 @@ import { generateUniqueInvoiceValue } from "../helpers/generate-invoice";
 import History from "../models/history.models";
 import Order from "../models/order.models";
 import { connectToDB } from "../mongoose";
-import { getUserDetails } from "../utils";
+import { getUserDetails } from "../user-details";
 
 
 interface OrderProps {

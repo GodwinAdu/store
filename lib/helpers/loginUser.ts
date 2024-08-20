@@ -6,7 +6,7 @@ import User from "../models/user.models";
 import { compare } from "bcryptjs";
 import jwt from 'jsonwebtoken';
 import History from "../models/history.models";
-import { getUserDetails } from "../utils";
+import { getUserDetails } from "../user-details";
 
 interface LoginProps {
     email: string;

@@ -6,7 +6,7 @@ import { connectToDB } from "../mongoose"
 import { revalidatePath } from "next/cache";
 import { currentProfile } from "../helpers/current-user";
 import History from "../models/history.models";
-import { getUserDetails } from "../utils";
+import { getUserDetails } from "../user-details";
 
 interface UserProps {
     username: string;
